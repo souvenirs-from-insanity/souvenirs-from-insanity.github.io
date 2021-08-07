@@ -1,0 +1,232 @@
+<title>Souvenirs from Insanity</title>
+<style>
+#months {
+display: flex;
+flex-wrap: wrap;
+flex-direction: row;
+}
+#months>* {
+margin: 10px;
+width: 20%;
+}
+#months span {
+ color: #aaa;
+}
+#months a {
+ font-weight: bold;
+ color: red;
+}
+#months a.wip {
+ color: #333;
+}
+#months a:visited {
+ color: #a00;
+}
+#introduction {
+  line-height: 1.6em;
+}
+</style>
+
+<script>
+
+function table(rows) {
+  return {
+    at: (x,y) => rows[y][x],
+    w: rows.length < 1 ? 0 : rows[0].length,
+    h: rows.length
+  }
+}
+
+function emptyTable() {
+  return {
+    at: (x,y) => {
+      throw Error("Trying to inspect empty table")
+    },
+    w: 0,
+    h: 0
+  }
+}
+
+function singletonTable(val) {
+  return {
+    at: (x,y) => val,
+    w: 1,
+    h: 1
+  }
+}
+
+function combineHor(a,b) {
+  return {
+    at: (x, y) => {
+      return x < a.w ? a.at(x,y) : b.at(x - a.w,y)
+    },
+    w: a.w + b.w,
+    h: a.h || b.w // empty table is special case
+  }
+}
+
+function combineVer(a,b) {
+  return {
+    at: (x, y) => y < a.h ? a.at(x,y) : b.at(x,y - a.h),
+    w: a.w || b.w, // empty table is special case
+    h: a.h + b.h
+  }
+}
+
+function printTable(tbl) {
+  for (let j = 0; j < tbl.h; j++) {
+    const line = reduce1((a,b) => `${a}, ${b}`, seq(tbl.w).map(i => {
+      return `${tbl.at(i,j)}`
+    }))
+    console.log(line);
+  }
+}
+
+function tableToHtml(tbl, renderDateFn) {
+  const table = document.createElement("table");
+  seq(tbl.h).forEach(j => {
+    const tr = document.createElement("tr");
+    seq(tbl.w).forEach(i => {
+      const val = tbl.at(i,j)
+      const td = document.createElement("td");
+      if (val) {
+        const cellElement = renderDateFn(val)
+        td.appendChild(cellElement);
+      }
+      tr.appendChild(td);
+    })
+    table.appendChild(tr);
+  })
+  return table;
+}
+
+const seq = n => Array.from(Array(n).keys())
+const reduceTable = (fn, xs) => xs.reduce(fn, emptyTable())
+const reduce1 = (fn, xs) => xs.slice(1).reduce(fn, xs[0])
+const daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
+const firstDayOfMonth = seq(12).map((_,i) => new Date(2021,i,1).getDay());
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+const monthsTable = seq(12).map(monthIndex => {
+  const firstDay = firstDayOfMonth[monthIndex];
+  const dayCount = daysInMonth[monthIndex];
+  const rowCount = Math.ceil((firstDay + dayCount) / 7);
+  const rows = reduce1(combineVer, seq(rowCount).map(rowIx => {
+    const cells = reduceTable(combineHor, seq(7).map(colIx => {
+      const d = rowIx * 7 + colIx - firstDay + 1;
+      return singletonTable((d < 1 || d > dayCount) ? null : d)
+    }))
+    return cells
+  }));
+  const dayNameRow = reduce1(combineHor, dayNames.map(singletonTable))
+  return combineVer(dayNameRow, rows)
+})
+
+
+</script>
+
+<h1>Souvenirs from Insanity</h1>
+
+<p id="introduction">
+Memories that are not mine.<br>
+Beauty that I used to not see.<br>
+A life that was worth living.
+</p>
+
+<a href="./days/2021-01-15/index.html">Open first day</a>
+
+<h2>2021</h2>
+<div id="months">
+</div>
+
+<script>
+const dates = [
+  {
+    "date": "2021-01-15",
+    "done": true,
+    "title": "The baptism"
+  },
+  {
+    "date": "2021-02-15",
+    "done": false,
+    "title": null
+  },
+  {
+    "date": "2021-04-04",
+    "done": false,
+    "title": null
+  },
+  {
+    "date": "2021-04-25",
+    "done": false,
+    "title": null
+  },
+  {
+    "date": "2021-05-22",
+    "done": true,
+    "title": "A date"
+  },
+  {
+    "date": "2021-06-26",
+    "done": false,
+    "title": null
+  },
+  {
+    "date": "2021-08-04",
+    "done": true,
+    "title": "The fungus of humanity"
+  }
+]
+;
+
+monthsTable.forEach((tbl, i) => {
+
+  function dateHtml(dayOfMonth) {
+    const month = (i + 1) > 9 ? (i + 1) : `0${i+1}`
+    const date = `2021-${month}-${dayOfMonth > 9 ? dayOfMonth : `0${dayOfMonth}`}`;
+    const match = dates.find(x => x.date === date)
+    if (match) { // yes here we check for the presence of stuff like 2021-03-Mo - God forgive me
+      const { done, title } = match;
+      const span = document.createElement("span");
+      const a = document.createElement("a");
+      if (done) {
+        a.href = `./days/${date}/index.html`;
+        a.title = title;
+        a.classList.add("done");
+      } else {
+        a.classList.add("wip");
+        a.title = 'not written YET';
+      }
+      a.innerText = `${dayOfMonth}`;
+      span.appendChild(a);
+      return span;
+    } else {
+      const span = document.createElement("span");
+      span.innerText = `${dayOfMonth}`;
+      return span;
+    }
+  }
+
+  const month = monthNames[i]
+  console.log(`${month}:`);
+  printTable(tbl)
+  console.log(``);
+  const monthDiv = document.createElement("div");
+  const monthLabel = document.createElement("h4");
+  monthLabel.innerText = month
+  monthDiv.appendChild(monthLabel);
+  monthDiv.appendChild(tableToHtml(tbl, dateHtml));
+  document.getElementById("months").appendChild(monthDiv);
+})
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-228EEJMD90"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-228EEJMD90');
+</script>

@@ -1,4 +1,4 @@
-<title>Souvenirs from Insanity</title>
+<html><head><title>Souvenirs from Insanity</title>
 <style>
 #months {
 display: flex;
@@ -27,106 +27,8 @@ width: 20%;
 }
 </style>
 
-<script>
 
-function table(rows) {
-  return {
-    at: (x,y) => rows[y][x],
-    w: rows.length < 1 ? 0 : rows[0].length,
-    h: rows.length
-  }
-}
-
-function emptyTable() {
-  return {
-    at: (x,y) => {
-      throw Error("Trying to inspect empty table")
-    },
-    w: 0,
-    h: 0
-  }
-}
-
-function singletonTable(val) {
-  return {
-    at: (x,y) => val,
-    w: 1,
-    h: 1
-  }
-}
-
-function combineHor(a,b) {
-  return {
-    at: (x, y) => {
-      return x < a.w ? a.at(x,y) : b.at(x - a.w,y)
-    },
-    w: a.w + b.w,
-    h: a.h || b.w // empty table is special case
-  }
-}
-
-function combineVer(a,b) {
-  return {
-    at: (x, y) => y < a.h ? a.at(x,y) : b.at(x,y - a.h),
-    w: a.w || b.w, // empty table is special case
-    h: a.h + b.h
-  }
-}
-
-function printTable(tbl) {
-  for (let j = 0; j < tbl.h; j++) {
-    const line = reduce1((a,b) => `${a}, ${b}`, seq(tbl.w).map(i => {
-      return `${tbl.at(i,j)}`
-    }))
-    console.log(line);
-  }
-}
-
-function tableToHtml(tbl, renderDateFn) {
-  const table = document.createElement("table");
-  seq(tbl.h).forEach(j => {
-    const tr = document.createElement("tr");
-    seq(tbl.w).forEach(i => {
-      const val = tbl.at(i,j)
-      const td = document.createElement("td");
-      if (val) {
-        const cellElement = renderDateFn(val)
-        td.appendChild(cellElement);
-      }
-      tr.appendChild(td);
-    })
-    table.appendChild(tr);
-  })
-  return table;
-}
-
-const seq = n => Array.from(Array(n).keys())
-const reduceTable = (fn, xs) => xs.reduce(fn, emptyTable())
-const reduce1 = (fn, xs) => xs.slice(1).reduce(fn, xs[0])
-const daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
-const firstDayOfMonth = seq(12).map((_,i) => new Date(2021,i,1).getDay());
-const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-
-const monthsTable = seq(12).map(monthIndex => {
-  const firstDay = firstDayOfMonth[monthIndex];
-  const dayCount = daysInMonth[monthIndex];
-  const rowCount = Math.ceil((firstDay + dayCount) / 7);
-  const rows = reduce1(combineVer, seq(rowCount).map(rowIx => {
-    const cells = reduceTable(combineHor, seq(7).map(colIx => {
-      const d = rowIx * 7 + colIx - firstDay + 1;
-      return singletonTable((d < 1 || d > dayCount) ? null : d)
-    }))
-    return cells
-  }));
-  const dayNameRow = reduce1(combineHor, dayNames.map(singletonTable))
-  return combineVer(dayNameRow, rows)
-})
-
-
-</script>
-
-<h1>Souvenirs from Insanity</h1>
+</head><body><h1>Souvenirs from Insanity</h1>
 
 <p id="introduction">
 Memories that are not mine.<br>
@@ -138,91 +40,9 @@ A life that was worth living.
 
 <h2>2021</h2>
 <div id="months">
-</div>
-
-<script>
-const dates = [
-  {
-    "date": "2021-01-15",
-    "done": true,
-    "title": "The baptism"
-  },
-  {
-    "date": "2021-02-15",
-    "done": false,
-    "title": null
-  },
-  {
-    "date": "2021-04-04",
-    "done": false,
-    "title": null
-  },
-  {
-    "date": "2021-04-25",
-    "done": false,
-    "title": null
-  },
-  {
-    "date": "2021-05-22",
-    "done": true,
-    "title": "A date"
-  },
-  {
-    "date": "2021-06-26",
-    "done": false,
-    "title": null
-  },
-  {
-    "date": "2021-08-04",
-    "done": true,
-    "title": "The fungus of humanity"
-  }
-]
-;
-
-monthsTable.forEach((tbl, i) => {
-
-  function dateHtml(dayOfMonth) {
-    const month = (i + 1) > 9 ? (i + 1) : `0${i+1}`
-    const date = `2021-${month}-${dayOfMonth > 9 ? dayOfMonth : `0${dayOfMonth}`}`;
-    const match = dates.find(x => x.date === date)
-    if (match) { // yes here we check for the presence of stuff like 2021-03-Mo - God forgive me
-      const { done, title } = match;
-      const span = document.createElement("span");
-      const a = document.createElement("a");
-      if (done) {
-        a.href = `./days/${date}/index.html`;
-        a.title = title;
-        a.classList.add("done");
-      } else {
-        a.classList.add("wip");
-        a.title = 'not written YET';
-      }
-      a.innerText = `${dayOfMonth}`;
-      span.appendChild(a);
-      return span;
-    } else {
-      const span = document.createElement("span");
-      span.innerText = `${dayOfMonth}`;
-      return span;
-    }
-  }
-
-  const month = monthNames[i]
-  console.log(`${month}:`);
-  printTable(tbl)
-  console.log(``);
-  const monthDiv = document.createElement("div");
-  const monthLabel = document.createElement("h4");
-  monthLabel.innerText = month
-  monthDiv.appendChild(monthLabel);
-  monthDiv.appendChild(tableToHtml(tbl, dateHtml));
-  document.getElementById("months").appendChild(monthDiv);
-})
-</script>
-
+<div><h4>Jan</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td><span>1</span></td><td><span>2</span></td></tr><tr><td><span>3</span></td><td><span>4</span></td><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td></tr><tr><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td><td><span><a href="./days/2021-01-15/index.html" title="The baptism" class="done">15</a></span></td><td><span>16</span></td></tr><tr><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td></tr><tr><td><span>24</span></td><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td></tr><tr><td><span>31</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table></div><div><h4>Feb</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td><td><span>4</span></td><td><span>5</span></td><td><span>6</span></td></tr><tr><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td></tr><tr><td><span>14</span></td><td><span><a class="wip" title="not written YET">15</a></span></td><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td></tr><tr><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td></tr><tr><td><span>28</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table></div><div><h4>Mar</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td><td><span>4</span></td><td><span>5</span></td><td><span>6</span></td></tr><tr><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td></tr><tr><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td></tr><tr><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td></tr><tr><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td><td><span>31</span></td><td></td><td></td><td></td></tr></table></div><div><h4>Apr</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td></td><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td></tr><tr><td><span><a class="wip" title="not written YET">4</a></span></td><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td></tr><tr><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td></tr><tr><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td></tr><tr><td><span><a class="wip" title="not written YET">25</a></span></td><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td><td></td></tr></table></div><div><h4>May</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td><span>1</span></td></tr><tr><td><span>2</span></td><td><span>3</span></td><td><span>4</span></td><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td></tr><tr><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td><td><span>15</span></td></tr><tr><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td><td><span><a href="./days/2021-05-22/index.html" title="A date" class="done">22</a></span></td></tr><tr><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td></tr><tr><td><span>30</span></td><td><span>31</span></td><td></td><td></td><td></td><td></td><td></td></tr></table></div><div><h4>Jun</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td><td><span>4</span></td><td><span>5</span></td></tr><tr><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td></tr><tr><td><span>13</span></td><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td></tr><tr><td><span>20</span></td><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td><td><span><a class="wip" title="not written YET">26</a></span></td></tr><tr><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td><td></td><td></td><td></td></tr></table></div><div><h4>Jul</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td></td><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td></tr><tr><td><span>4</span></td><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td></tr><tr><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td></tr><tr><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td></tr><tr><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td><td><span>31</span></td></tr></table></div><div><h4>Aug</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td><td><span><a href="./days/2021-08-04/index.html" title="The fungus of humanity" class="done">4</a></span></td><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td></tr><tr><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td></tr><tr><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td></tr><tr><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td></tr><tr><td><span>29</span></td><td><span>30</span></td><td><span>31</span></td><td></td><td></td><td></td><td></td></tr></table></div><div><h4>Sep</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td><td><span>4</span></td></tr><tr><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td></tr><tr><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td></tr><tr><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td></tr><tr><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td><td></td><td></td></tr></table></div><div><h4>Oct</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td><span>1</span></td><td><span>2</span></td></tr><tr><td><span>3</span></td><td><span>4</span></td><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td></tr><tr><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td></tr><tr><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td></tr><tr><td><span>24</span></td><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td></tr><tr><td><span>31</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table></div><div><h4>Nov</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td><td><span>4</span></td><td><span>5</span></td><td><span>6</span></td></tr><tr><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td><td><span>12</span></td><td><span>13</span></td></tr><tr><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td><td><span>19</span></td><td><span>20</span></td></tr><tr><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td><td><span>26</span></td><td><span>27</span></td></tr><tr><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td><td></td><td></td><td></td><td></td></tr></table></div><div><h4>Dec</h4><table><tr><td><span>Su</span></td><td><span>Mo</span></td><td><span>Tu</span></td><td><span>We</span></td><td><span>Th</span></td><td><span>Fr</span></td><td><span>Sa</span></td></tr><tr><td></td><td></td><td></td><td><span>1</span></td><td><span>2</span></td><td><span>3</span></td><td><span>4</span></td></tr><tr><td><span>5</span></td><td><span>6</span></td><td><span>7</span></td><td><span>8</span></td><td><span>9</span></td><td><span>10</span></td><td><span>11</span></td></tr><tr><td><span>12</span></td><td><span>13</span></td><td><span>14</span></td><td><span>15</span></td><td><span>16</span></td><td><span>17</span></td><td><span>18</span></td></tr><tr><td><span>19</span></td><td><span>20</span></td><td><span>21</span></td><td><span>22</span></td><td><span>23</span></td><td><span>24</span></td><td><span>25</span></td></tr><tr><td><span>26</span></td><td><span>27</span></td><td><span>28</span></td><td><span>29</span></td><td><span>30</span></td><td><span>31</span></td><td></td></tr></table></div></div>
 <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-228EEJMD90"></script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-228EEJMD90"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -230,3 +50,5 @@ monthsTable.forEach((tbl, i) => {
 
   gtag('config', 'G-228EEJMD90');
 </script>
+
+</body></html>
